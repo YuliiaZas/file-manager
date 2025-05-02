@@ -1,5 +1,6 @@
 import log from '../utils/logger.js';
 import { handleNavigation } from '../commands/navigation.js';
+import { handleFileOperations } from '../commands/fileOperations.js';
 
 export const handleCommand = async (input) => {
   const [command, ...args] = input.trim().split(/\s+/);
@@ -10,6 +11,16 @@ export const handleCommand = async (input) => {
       case 'cd':
       case 'ls':
         await handleNavigation(command, args);
+        break;
+
+      case 'cat':
+      case 'add':
+      case 'mkdir':
+      case 'rn':
+      case 'cp':
+      case 'mv':
+      case 'rm':
+        await handleFileOperations(command, args);
         break;
 
       case '.exit':
