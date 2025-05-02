@@ -1,5 +1,6 @@
 import { argv, exit } from 'node:process';
 import readline from 'node:readline';
+import { handleCommand } from './cli/index.js';
 import log from './utils/logger.js';
 
 let username = 'Anonymous';
@@ -18,7 +19,7 @@ log.greet(`Welcome to the File Manager, ${username}!`);
 log.path();
 rl.prompt();
 
-rl.on('line', (line) => {
+rl.on('line', async (line) => {
   const command = line.trim();
 
   if (command === '.exit') {
@@ -26,8 +27,9 @@ rl.on('line', (line) => {
     return;
   }
 
-  log.error('Invalid input');
+  await handleCommand(command);
 
+  await new Promise(resolve => setTimeout(resolve, 0));
   log.path();
   rl.prompt();
 });

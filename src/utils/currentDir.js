@@ -1,12 +1,27 @@
 import { homedir } from 'node:os';
-import { chdir } from 'node:process';
+import { chdir, cwd } from 'node:process';
 
-let currentDir = homedir();
-chdir(currentDir);
+let currentDir;
+const rootDir = homedir();
+setCurrentDir(rootDir);
 
-export const getCurrentDir = () => currentDir;
+export function getCurrentDir() {
+  return currentDir;
+}
 
-export const setCurrentDir = (newDir) => {
-  chdir(currentDir);
-  currentDir = newDir;
-};
+export function setCurrentDir(newDir) {
+  try {
+    chdir(newDir);
+    currentDir = cwd();
+  } catch (error) {
+    throw new Error('No such directory');
+  }
+}
+
+export function isRootDir() {
+  return currentDir === rootDir;
+}
+
+export function hasCurrentRoot(target) {
+  return target.startsWith(rootDir);
+}
