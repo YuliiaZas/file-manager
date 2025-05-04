@@ -1,9 +1,10 @@
-import log from '../utils/logger.js';
+import { parseArgs } from '../utils/parseArgs.js';
+import { log } from '../utils/logger.js';
 import { handleNavigation } from '../commands/navigation.js';
 import { handleFileOperations } from '../commands/fileOperations.js';
 
 export const handleCommand = async (input) => {
-  const [command, ...args] = input.trim().split(/\s+/);
+  const [command, ...args] = parseArgs(input);
 
   try {
     switch (command) {

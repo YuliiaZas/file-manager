@@ -30,12 +30,10 @@ const writeToStdout = (type, message, args = []) => {
 }
 
 
-const log = {
+export const log = {
   default: (message) => writeToStdout('default', message),
   info: (message) => writeToStdout('info', message),
   error: (message, ...args) => writeToStdout('error', message, args),
   path: (message) => writeToStdout('path', message),
   greet: (message) => writeToStdout('greet', message),
 };
-
-export default log;

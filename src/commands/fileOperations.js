@@ -1,8 +1,8 @@
 import { createReadStream } from 'node:fs';
-import { writeFile, mkdir } from 'node:fs/promises';
+import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { pipeline } from 'node:stream/promises';
-import readline from 'node:readline';
-import log from '../utils/logger.js';
+import { rl } from '../cli/rl.js';
+import { log } from '../utils/logger.js';
 
 const VALIDATION_ERROR_MAP = {
   'cat': ['No file path provided'],
@@ -81,24 +81,20 @@ async function renameFile([path, newPath]) {
 };
 
 async function deleteFile(path) {
-  // if (mainInterface) mainInterface.pause();
-  // const rl = readline.createInterface({
-  //   input: process.stdin,
-  //   output: process.stdout,
-  // });
-  // const isConfirmed = await new Promise((resolve) => {
-  //   rl.question(`Are you sure you want to delete ${path}? (y/n): `, (answer) => {
-  //     rl.close();
-  //     resolve(answer.trim().toLowerCase() === 'y');
-  //   });
-  // });
+  rl.pause();
 
-  // if (isConfirmed) {
+  const isConfirmed = await new Promise((resolve) =>
+    rl.question(`Are you sure you want to delete ${path}? (y/n): `, (answer) => 
+      resolve(answer.trim().toLowerCase() === 'y')
+    )
+  );
+
+  if (isConfirmed) {
     await unlink(path);
     log.info(`File ${path} deleted`);
-  // } else {
-  //   log.info('File deletion cancelled');
-  // }
+  } else {
+    log.info('File deletion cancelled');
+  }
 
-  // if (mainInterface) mainInterface.resume();
+  rl.resume();
 };

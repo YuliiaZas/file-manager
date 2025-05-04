@@ -1,19 +1,13 @@
 import { argv, exit } from 'node:process';
-import readline from 'node:readline';
 import { handleCommand } from './cli/index.js';
-import log from './utils/logger.js';
+import { rl } from './cli/rl.js';
+import { log } from './utils/logger.js';
 
 let username = 'Anonymous';
 const usernameArg = argv.find(arg => arg.startsWith('--username='));
 if (usernameArg) {
   username = usernameArg.split('=')[1] || username;
 }
-
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-  prompt: '> '
-});
 
 log.greet(`Welcome to the File Manager, ${username}!`);
 log.path();
