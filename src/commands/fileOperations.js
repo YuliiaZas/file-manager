@@ -1,20 +1,20 @@
 import { createReadStream, createWriteStream } from 'node:fs';
 import {
-  access,
-  constants,
   mkdir,
+  readdir,
   rename as fsRename,
   rm,
   stat,
   unlink,
   writeFile,
 } from 'node:fs/promises';
+import { join } from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { confirmAction } from '../cli/rl.js';
 import { log } from '../utils/logger.js';
 import { pathAbsent, destPathAbsent } from '../utils/constants.js';
 import { throwIfExists } from '../utils/validate.js';
-import { InvalidInputError } from '../utils/errors.js';
+import { AlreadyExistsError, InvalidInputError, OperationError } from '../utils/errors.js';
 
 const VALIDATION_ERROR_MAP = {
   'cat': [pathAbsent],
@@ -52,10 +52,10 @@ export const handleFileOperations = async (command, args) => {
       await renamePath(args);
       break;
     case 'cp':
-      await copyFileTo(args);
+      await copyPathTo(args);
       break;
     case 'mv':
-      await copyFileTo(args, true);
+      await copyPathTo(args, true);
       break;
     case 'rm':
       await deletePath(args[0]);
@@ -94,31 +94,6 @@ async function renamePath([path, newPath]) {
   log.info(`${entityType} ${path} renamed to ${newPath}`);
 }
 
-async function copyFileTo([path, destination], deleteSource = false) {
-  let shouldCopy = true;
-  try {
-    await access(destination, constants.F_OK);
-    shouldCopy = await confirmAction(`File ${destination} already exists. Overwrite?`);
-
-    if (!shouldCopy) {
-      log.warning(`File ${deleteSource ? 'move' : 'copy'} cancelled`);
-      return;
-    }
-  } catch (error) {
-    if (error.code !== 'ENOENT') throw error;
-  }
-
-  await pipeline(
-    createReadStream(path),
-    createWriteStream(destination),
-    { end: false },
-  );
-  if (deleteSource) {
-    await unlink(path);
-  }
-  log.info(`File ${path} ${deleteSource ? 'moved' : 'copied'} to ${destination}`);
-}
-
 async function deletePath(path) {
   const isDirectory = (await stat(path)).isDirectory();
   const entityType = isDirectory ? 'Directory' : 'File';
@@ -132,4 +107,49 @@ async function deletePath(path) {
   await (isDirectory ? rm(path, { recursive: true, force: true }) : unlink(path));
 
   log.info(`${entityType} ${path} deleted`);
+}
+
+async function copyPathTo([source, destination], deleteSource = false) {
+  const sourceStat = await stat(source);
+  let shouldCopy = true;
+  let entityType = sourceStat.isDirectory() ? 'Directory' : 'File';
+
+  try {
+    await throwIfExists(destination);
+  } catch (error) {
+    if (error instanceof AlreadyExistsError) {
+      shouldCopy = await confirmAction(`${error.message}. Overwrite?`);
+      if (!shouldCopy) {
+        log.warning(`Operation ${deleteSource ? 'move' : 'copy'} cancelled`);
+        return;
+      }
+    } else if (error.code !== 'ENOENT') {
+      throw error;
+    }
+  }
+
+  if (sourceStat.isFile()) {
+    await pipeline(
+      createReadStream(source),
+      createWriteStream(destination),
+      { end: false },
+    );
+  } else if (sourceStat.isDirectory()) {
+    await mkdir(destination, { recursive: true });
+    const entries = await readdir(source, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const srcPath = join(source, entry.name);
+      const destPath = join(destination, entry.name);
+      await copyPathTo([srcPath, destPath]);
+    }
+  } else {
+    throw new OperationError(`${source} is not a valid file or directory`);
+  }
+
+  if (deleteSource) {
+    await deletePath(source);
+  }
+
+  log.info(`${entityType} ${source} ${deleteSource ? 'moved' : 'copied'} to ${destination}`);
 }

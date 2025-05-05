@@ -1,4 +1,5 @@
 import readline from 'node:readline';
+import { log } from '../utils/logger.js';
 
 export const rl = readline.createInterface({
   input: process.stdin,
@@ -7,6 +8,7 @@ export const rl = readline.createInterface({
 });
 
 export const confirmAction = (message) =>
-  new Promise(resolve =>
-    rl.question(`${message} (y/n): `, answer => resolve(answer.toLowerCase() === 'y'))
-  );
+  new Promise(resolve => {
+    log.warning(`${message} (y/n): `);
+    rl.question('', answer => resolve(answer.toLowerCase() === 'y'));
+  });
