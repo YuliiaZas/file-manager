@@ -1,7 +1,16 @@
 import { createReadStream, createWriteStream } from 'node:fs';
-import { access, constants, mkdir, rename as fsRename, unlink, writeFile } from 'node:fs/promises';
+import {
+  access,
+  constants,
+  mkdir,
+  rename as fsRename,
+  rm,
+  stat,
+  unlink,
+  writeFile,
+} from 'node:fs/promises';
 import { pipeline } from 'node:stream/promises';
-import { confirmAction, rl } from '../cli/rl.js';
+import { confirmAction } from '../cli/rl.js';
 import { log } from '../utils/logger.js';
 
 const pathAbsent = 'No file path provided';
@@ -40,7 +49,7 @@ export const handleFileOperations = async (command, args) => {
       await createDir(args[0]);
       break;
     case 'rn':
-      await renameFile(args);
+      await renamePath(args);
       break;
     case 'cp':
       await copyFileTo(args);
@@ -49,7 +58,7 @@ export const handleFileOperations = async (command, args) => {
       await copyFileTo(args, true);
       break;
     case 'rm':
-      await deleteFile(args[0]);
+      await deletePath(args[0]);
       break;
   }
 };
@@ -69,20 +78,30 @@ async function createFile(path) {
 }
 
 async function createDir(path) {
+  try {
+    const stats = await stat(path);
+    if (stats.isDirectory()) {
+      throw new Error(`Directory ${path} already exists`);
+    }
+  } catch (err) {
+    if (err.code !== 'ENOENT') throw err;
+  }
+
   await mkdir(path, { recursive: true });
   log.info(`Directory ${path} created`);
 }
 
-async function renameFile([path, newPath]) {
+async function renamePath([path, newPath]) {
+  const entityType = (await stat(path)).isDirectory() ? 'Directory' : 'File';
   try {
-    await access(newPath, constants.F_OK);
-    throw fsError;
+    const targetEntityType = (await stat(newPath)).isDirectory() ? 'Directory' : 'File';
+    throw new Error(`${targetEntityType} with name ${newPath} already exists`);
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
   }
   
   await fsRename(path, newPath);
-  log.info(`File ${path} renamed to ${newPath}`);
+  log.info(`${entityType} ${path} renamed to ${newPath}`);
 }
 
 async function copyFileTo([path, destination], deleteSource = false) {
@@ -110,17 +129,17 @@ async function copyFileTo([path, destination], deleteSource = false) {
   log.info(`File ${path} ${deleteSource ? 'moved' : 'copied'} to ${destination}`);
 }
 
-async function deleteFile(path) {
-  rl.pause();
+async function deletePath(path) {
+  const isDirectory = (await stat(path)).isDirectory();
+  const entityType = isDirectory ? 'Directory' : 'File';
+  const isConfirmed = await confirmAction(`Are you sure you want to delete ${entityType} ${path}?`);
 
-  const isConfirmed = await confirmAction(`Are you sure you want to delete ${path}?`);
-
-  if (isConfirmed) {
-    await unlink(path);
-    log.info(`File ${path} deleted`);
-  } else {
-    log.warning('File deletion cancelled');
+  if (!isConfirmed) {
+    log.warning(`${entityType} deletion cancelled`);
+    return;
   }
 
-  rl.resume();
+  await (isDirectory ? rm(path, { recursive: true, force: true }) : unlink(path));
+
+  log.info(`${entityType} ${path} deleted`);
 }
