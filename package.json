@@ -1,0 +1,24 @@
+{
+  "name": "file-manager",
+  "version": "1.0.0",
+  "description": "This is a command-line file manager built using **Node.js (v22+)** and native Node.js APIs. It supports file system navigation, file operations, hashing, compression, and basic OS information display.",
+  "engines": {
+    "node": ">=22.14.0"
+  },
+  "type": "module",
+  "main": "app.js",
+  "scripts": {
+    "start": "node src/app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YuliiaZas/file-manager.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/YuliiaZas/file-manager/issues"
+  },
+  "homepage": "https://github.com/YuliiaZas/file-manager#readme"
+}

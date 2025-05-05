@@ -35,11 +35,12 @@ npm run start -- --username=YourName
 
 - File operations: `cat`, `add`, `rm`, `rn`, `cp`, `mv`, `mkdir`
 
-- OS Info: `os --EOL`, `--cpus`, `--homedir`, `--username`, `--architecture`
+- OS Info: `os`:  `--EOL`, `--cpus`, `--homedir`, `--username`, `--architecture`
 
-- Hashing: `hash path_to_file`
+- Hashing: `hash`
 
 - Compression: `compress`, `decompress` using Brotli
 
 - Graceful exit: `.exit` or `Ctrl + C`
   
+- Help: `.help` command to display available commands
