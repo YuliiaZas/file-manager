@@ -9,9 +9,13 @@ if (usernameArg) {
   username = usernameArg.split('=')[1] || username;
 }
 
+const setForNewCommand = () => {
+  log.path();
+  rl.prompt();
+};
+
 log.greet(`Welcome to the File Manager, ${username}!`);
-log.path();
-rl.prompt();
+setForNewCommand();
 
 rl.on('line', async (line) => {
   const command = line.trim();
@@ -24,8 +28,7 @@ rl.on('line', async (line) => {
   await handleCommand(command);
 
   await new Promise(resolve => setTimeout(resolve, 0));
-  log.path();
-  rl.prompt();
+  setForNewCommand();
 });
 
 rl.on('SIGINT', () => {

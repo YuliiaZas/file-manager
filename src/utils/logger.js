@@ -4,17 +4,19 @@ import { getCurrentDir } from './currentDir.js';
 const COLORS = {
   reset: '\x1b[0m',
   green: '\x1b[32m',
+  yellow: '\x1b[33m',
   red: '\x1b[31m',
   blue: '\x1b[34m',
-  yellow: '\x1b[33m'
+  yellowBg: '\x1b[43m',
 };
 
 const COLORS_MAP = {
   default: COLORS.reset,
   info: COLORS.green,
+  warning: COLORS.yellow,
   error: COLORS.red,
   path: COLORS.blue,
-  greet: COLORS.yellow
+  greet: COLORS.yellowBg
 };
 
 const writeToStdout = (type, message, args = []) => {
@@ -33,6 +35,7 @@ const writeToStdout = (type, message, args = []) => {
 export const log = {
   default: (message) => writeToStdout('default', message),
   info: (message) => writeToStdout('info', message),
+  warning: (message) => writeToStdout('warning', message),
   error: (message, ...args) => writeToStdout('error', message, args),
   path: (message) => writeToStdout('path', message),
   greet: (message) => writeToStdout('greet', message),

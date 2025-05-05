@@ -1,24 +1,27 @@
-import { createReadStream } from 'node:fs';
-import { mkdir, unlink, writeFile } from 'node:fs/promises';
+import { createReadStream, createWriteStream } from 'node:fs';
+import { access, constants, mkdir, rename as fsRename, unlink, writeFile } from 'node:fs/promises';
 import { pipeline } from 'node:stream/promises';
-import { rl } from '../cli/rl.js';
+import { confirmAction, rl } from '../cli/rl.js';
 import { log } from '../utils/logger.js';
 
+const pathAbsent = 'No file path provided';
+const destPathAbsent = 'No destination path provided';
+
 const VALIDATION_ERROR_MAP = {
-  'cat': ['No file path provided'],
-  'add': ['No file path provided', 'No new file name provided'],
+  'cat': [pathAbsent],
+  'add': [pathAbsent],
   'mkdir': ['No directory name provided'],
-  'rn': ['No file name provided', 'No new file name provided'],
-  'cp': ['No file path provided', 'No destination path provided'],
-  'mv': ['No file path provided', 'No destination path provided'],
-  'rm': ['No file path provided'],
+  'rn': [pathAbsent, 'No new file name provided'],
+  'cp': [pathAbsent, destPathAbsent],
+  'mv': [pathAbsent, destPathAbsent],
+  'rm': [pathAbsent],
 };
 
 const validate = (args, command) => {
   if (args.length === 0) {
     throw new Error(VALIDATION_ERROR_MAP[command][0]);
   }
-  if (VALIDATION_ERROR_MAP[command] === 2 && args.length < 2) {
+  if (VALIDATION_ERROR_MAP[command].length === 2 && args.length < 2) {
     throw new Error(VALIDATION_ERROR_MAP[command][1]);
   }
 };
@@ -43,7 +46,7 @@ export const handleFileOperations = async (command, args) => {
       await copyFileTo(args);
       break;
     case 'mv':
-      await moveFileTo(args);
+      await copyFileTo(args, true);
       break;
     case 'rm':
       await deleteFile(args[0]);
@@ -57,6 +60,7 @@ async function readFile(path) {
     process.stdout,
     { end: false },
   );
+  process.stdout.write('\n');
 }
 
 async function createFile(path) {
@@ -71,30 +75,52 @@ async function createDir(path) {
 
 async function renameFile([path, newPath]) {
   try {
-      await access(newPath, constants.F_OK);
-      throw fsError;
+    await access(newPath, constants.F_OK);
+    throw fsError;
   } catch (error) {
-      if (error.code !== 'ENOENT') throw error;
+    if (error.code !== 'ENOENT') throw error;
   }
   
   await fsRename(path, newPath);
-};
+  log.info(`File ${path} renamed to ${newPath}`);
+}
+
+async function copyFileTo([path, destination], deleteSource = false) {
+  let shouldCopy = true;
+  try {
+    await access(destination, constants.F_OK);
+    shouldCopy = await confirmAction(`File ${destination} already exists. Overwrite?`);
+
+    if (!shouldCopy) {
+      log.warning(`File ${deleteSource ? 'move' : 'copy'} cancelled`);
+      return;
+    }
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+
+  await pipeline(
+    createReadStream(path),
+    createWriteStream(destination),
+    { end: false },
+  );
+  if (deleteSource) {
+    await unlink(path);
+  }
+  log.info(`File ${path} ${deleteSource ? 'moved' : 'copied'} to ${destination}`);
+}
 
 async function deleteFile(path) {
   rl.pause();
 
-  const isConfirmed = await new Promise((resolve) =>
-    rl.question(`Are you sure you want to delete ${path}? (y/n): `, (answer) => 
-      resolve(answer.trim().toLowerCase() === 'y')
-    )
-  );
+  const isConfirmed = await confirmAction(`Are you sure you want to delete ${path}?`);
 
   if (isConfirmed) {
     await unlink(path);
     log.info(`File ${path} deleted`);
   } else {
-    log.info('File deletion cancelled');
+    log.warning('File deletion cancelled');
   }
 
   rl.resume();
-};
+}

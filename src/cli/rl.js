@@ -5,3 +5,8 @@ export const rl = readline.createInterface({
   output: process.stdout,
   prompt: '> '
 });
+
+export const confirmAction = (message) =>
+  new Promise(resolve =>
+    rl.question(`${message} (y/n): `, answer => resolve(answer.toLowerCase() === 'y'))
+  );
