@@ -4,6 +4,7 @@ import { pipeline } from 'node:stream/promises';
 import { log } from '../utils/logger.js';
 import { throwIfNotFile } from '../utils/validate.js';
 import { InvalidInputError } from '../utils/errors.js';
+import { pathAbsent } from '../utils/constants.js';
 
 export const handleHash = async ([path]) => {
   if (!path) {
