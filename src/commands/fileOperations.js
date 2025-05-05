@@ -12,9 +12,7 @@ import {
 import { pipeline } from 'node:stream/promises';
 import { confirmAction } from '../cli/rl.js';
 import { log } from '../utils/logger.js';
-
-const pathAbsent = 'No file path provided';
-const destPathAbsent = 'No destination path provided';
+import { pathAbsent, destPathAbsent } from '../utils/constants.js';
 
 const VALIDATION_ERROR_MAP = {
   'cat': [pathAbsent],
