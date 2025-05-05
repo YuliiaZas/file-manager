@@ -3,7 +3,7 @@ import { log } from '../utils/logger.js';
 import { handleNavigation } from '../commands/navigation.js';
 import { handleFileOperations } from '../commands/fileOperations.js';
 import { handleCompression } from '../commands/compression.js';
-import { handleOsOperations } from '../commands/osOperations.js';
+import { handleOsInfo } from '../commands/osInfo.js';
 import { handleHash } from '../commands/hash.js';
 import { InvalidInputError } from '../utils/errors.js';
 
@@ -34,7 +34,7 @@ export const handleCommand = async (input) => {
         break;
 
       case 'os':
-        await handleOsOperations(args);
+        handleOsInfo(args);
         break;
 
       case 'hash':
