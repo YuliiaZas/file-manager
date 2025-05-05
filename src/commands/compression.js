@@ -1,8 +1,8 @@
 import { createReadStream, createWriteStream } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
 import { createBrotliCompress, createBrotliDecompress } from 'node:zlib';
-import { defaultExtension, pathAbsent } from '../utils/constants.js';
 import { confirmAction } from '../cli/rl.js';
+import { defaultExtension, pathAbsent } from '../utils/constants.js';
 import { log } from '../utils/logger.js';
 import { throwIfExists, throwIfNotFile } from '../utils/validate.js';
 import { InvalidInputError } from '../utils/errors.js';

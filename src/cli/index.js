@@ -1,11 +1,12 @@
 import { parseArgs } from '../utils/parseArgs.js';
 import { log } from '../utils/logger.js';
+import { InvalidInputError } from '../utils/errors.js';
 import { handleNavigation } from '../commands/navigation.js';
 import { handleFileOperations } from '../commands/fileOperations.js';
 import { handleCompression } from '../commands/compression.js';
 import { handleOsInfo } from '../commands/osInfo.js';
 import { handleHash } from '../commands/hash.js';
-import { InvalidInputError } from '../utils/errors.js';
+import { handleHelp } from '../commands/help.js';
 
 export const handleCommand = async (input) => {
   const [command, ...args] = parseArgs(input);
@@ -39,6 +40,10 @@ export const handleCommand = async (input) => {
 
       case 'hash':
         await handleHash(args);
+        break;
+
+      case '.help':
+        handleHelp();
         break;
 
       case '.exit':
