@@ -13,6 +13,7 @@ import { pipeline } from 'node:stream/promises';
 import { confirmAction } from '../cli/rl.js';
 import { log } from '../utils/logger.js';
 import { pathAbsent, destPathAbsent } from '../utils/constants.js';
+import { throwIfExists } from '../utils/entityExist.js';
 
 const VALIDATION_ERROR_MAP = {
   'cat': [pathAbsent],
@@ -76,14 +77,7 @@ async function createFile(path) {
 }
 
 async function createDir(path) {
-  try {
-    const stats = await stat(path);
-    if (stats.isDirectory()) {
-      throw new Error(`Directory ${path} already exists`);
-    }
-  } catch (err) {
-    if (err.code !== 'ENOENT') throw err;
-  }
+  await throwIfExists(path); // for the reviewer: this is a function to check if the path already exists - to aoivd silent override
 
   await mkdir(path, { recursive: true });
   log.info(`Directory ${path} created`);
@@ -91,12 +85,7 @@ async function createDir(path) {
 
 async function renamePath([path, newPath]) {
   const entityType = (await stat(path)).isDirectory() ? 'Directory' : 'File';
-  try {
-    const targetEntityType = (await stat(newPath)).isDirectory() ? 'Directory' : 'File';
-    throw new Error(`${targetEntityType} with name ${newPath} already exists`);
-  } catch (error) {
-    if (error.code !== 'ENOENT') throw error;
-  }
+  await throwIfExists(newPath); // for the reviewer: this is a function to check if the path already exists - to aoivd silent override
   
   await fsRename(path, newPath);
   log.info(`${entityType} ${path} renamed to ${newPath}`);
