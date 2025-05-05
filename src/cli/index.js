@@ -3,6 +3,9 @@ import { log } from '../utils/logger.js';
 import { handleNavigation } from '../commands/navigation.js';
 import { handleFileOperations } from '../commands/fileOperations.js';
 import { handleCompression } from '../commands/compression.js';
+import { handleOsOperations } from '../commands/osOperations.js';
+import { handleHash } from '../commands/hash.js';
+import { InvalidInputError } from '../utils/errors.js';
 
 export const handleCommand = async (input) => {
   const [command, ...args] = parseArgs(input);
@@ -30,14 +33,25 @@ export const handleCommand = async (input) => {
         await handleCompression(command, args);
         break;
 
+      case 'os':
+        await handleOsOperations(args);
+        break;
+
+      case 'hash':
+        await handleHash(args);
+        break;
+
       case '.exit':
         break;
 
       default:
-        log.error('Invalid input');
-        break;
+        throw new InvalidInputError(`Unknown command: ${command}`);
     }
   } catch (err) {
-    log.error('Operation failed', err.message);
+    if (err instanceof InvalidInputError) {
+      log.error('Invalid input', err.message);
+    } else {
+      log.error('Operation error', err.message);
+    }
   }
 };

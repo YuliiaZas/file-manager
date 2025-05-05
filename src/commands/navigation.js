@@ -6,6 +6,7 @@ import {
   isRootDir,
   setCurrentDir,
 } from '../utils/currentDir.js';
+import { InvalidInputError, OperationError } from '../utils/errors.js';
 
 const TYPE = {
   directory: 'directory',
@@ -14,7 +15,7 @@ const TYPE = {
 
 const upDir = () => {
   if (isRootDir()) {
-    throw new Error('Already at root directory');
+    throw new OperationError('Already at root directory');
   }
 
   setCurrentDir('..');
@@ -24,7 +25,7 @@ const changeDir = (target) => {
   const isPathAbsolute = path.isAbsolute(target);
 
   if (isPathAbsolute && !hasCurrentRoot(target)) {
-    throw new Error('Access denied: cannot go above root directory');
+    throw new OperationError('Access denied: cannot go above root directory');
   }
 
   setCurrentDir(isPathAbsolute ? target : path.join(getCurrentDir(), target));
@@ -56,7 +57,7 @@ export const handleNavigation = async (command, args) => {
       break;
     case 'cd':
       if (args.length === 0) {
-        throw new Error('No path provided');
+        throw new InvalidInputError('No destination path provided');
       }
       changeDir(args[0]);
       break;

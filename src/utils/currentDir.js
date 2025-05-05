@@ -1,5 +1,6 @@
 import { homedir } from 'node:os';
 import { chdir, cwd } from 'node:process';
+import { OperationError } from './errors.js';
 
 let currentDir;
 const rootDir = homedir();
@@ -14,7 +15,7 @@ export function setCurrentDir(newDir) {
     chdir(newDir);
     currentDir = cwd();
   } catch (error) {
-    throw new Error('No such directory');
+    throw new OperationError(`No such directory "${newDir}"`);
   }
 }
 

@@ -1,5 +1,5 @@
 import { stat } from 'node:fs/promises';
-import { AlreadyExistsError } from './errors.js';
+import { AlreadyExistsError, NotFileError } from './errors.js';
 
 export const throwIfExists = async (path) => {
   try {
@@ -8,4 +8,8 @@ export const throwIfExists = async (path) => {
   } catch (err) {
     if (err.code !== 'ENOENT') throw err;
   }
+};
+
+export const throwIfNotFile = async (path) => {
+  if(!(await stat(path)).isFile()) throw new NotFileError(path);
 };

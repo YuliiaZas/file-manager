@@ -1,20 +1,18 @@
 import { createReadStream, createWriteStream } from 'node:fs';
-import { stat } from 'node:fs/promises';
 import { pipeline } from 'node:stream/promises';
 import { createBrotliCompress, createBrotliDecompress } from 'node:zlib';
 import { defaultExtension, pathAbsent } from '../utils/constants.js';
 import { confirmAction } from '../cli/rl.js';
 import { log } from '../utils/logger.js';
-import { throwIfExists } from '../utils/entityExist.js';
+import { throwIfExists, throwIfNotFile } from '../utils/validate.js';
+import { InvalidInputError } from '../utils/errors.js';
 
 export const handleCompression = async (command, args) => {
   if (args.length === 0) {
-    throw new Error(pathAbsent);
+    throw new InvalidInputError(pathAbsent);
   }
 
-  if (!(await stat(args[0])).isFile()) {
-    throw new Error(`${args[0]} is not a file`);
-  }
+  await throwIfNotFile(args[0]);
 
   switch (command) {
     case 'compress':
@@ -49,11 +47,12 @@ async function compressFile([source, destination]) {
   log.info(`File ${source} compressed to ${destination}`);
 }
 
-export async function decompressFile([source, destination]) {
+async function decompressFile([source, destination]) {
   if (!destination) {
     if (!source.endsWith(defaultExtension)) {
-      log.warning(`No destination provided and source does not end with ${defaultExtension} — cannot suggest default`);
-      return;
+      throw new InvalidInputError(
+        `No destination provided and source does not end with ${defaultExtension} — cannot suggest default`
+      );
     }
 
     const defaultDest = source.slice(0, defaultExtension.length * -1);
