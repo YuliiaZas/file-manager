@@ -2,41 +2,32 @@ import { stdout } from 'node:process';
 import { getCurrentDir } from './currentDir.js'; 
 
 const COLORS = {
-  reset: '\x1b[0m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  red: '\x1b[31m',
-  blue: '\x1b[34m',
-  yellowBg: '\x1b[43m',
+  default: '\x1b[0m',
+  info: '\x1b[32m',
+  warning: '\x1b[33m',
+  error: '\x1b[31m',
+  path: '\x1b[34m',
+  greet: '\x1b[43m'
 };
 
-const COLORS_MAP = {
-  default: COLORS.reset,
-  info: COLORS.green,
-  warning: COLORS.yellow,
-  error: COLORS.red,
-  path: COLORS.blue,
-  greet: COLORS.yellowBg
-};
-
-const writeToStdout = (type, message, args = []) => {
-  const colorCode = COLORS_MAP[type] || COLORS.reset;
-
+const getFormattedMessage = (type, message, args = []) => {
   if (type === 'path' && !message) {
-    message = `You are currently in ${getCurrentDir()}`;
+    return `You are currently in ${getCurrentDir()}`;
   } else if (type === 'error' && args.length > 0) {
-    message = `${message}.${COLORS.reset} Reason: ${args.join(' ')}`;
+    return `${message}.${COLORS.default} Reason: ${args.join(' ')}`;
   }
-
-  stdout.write(`${colorCode}${message}${COLORS.reset}\n`);
-}
-
-
-export const log = {
-  default: (message) => writeToStdout('default', message),
-  info: (message) => writeToStdout('info', message),
-  warning: (message) => writeToStdout('warning', message),
-  error: (message, ...args) => writeToStdout('error', message, args),
-  path: (message) => writeToStdout('path', message),
-  greet: (message) => writeToStdout('greet', message),
+  return message;
 };
+
+const writeToStdout = (type, message, ...args) => {
+  const colorCode = COLORS[type] || COLORS.default;
+  const foemattedMessage = getFormattedMessage(type, message, args);
+
+  stdout.write(`${colorCode}${foemattedMessage}${COLORS.default}\n`);
+};
+
+export const log = new Proxy({}, {
+  get(_, type) {
+    return (message, ...args) => writeToStdout(type, message, ...args);
+  },
+});
